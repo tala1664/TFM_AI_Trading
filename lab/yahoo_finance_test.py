@@ -6,11 +6,18 @@ from pyspark.sql import SparkSession
 
 
 def download_market_data(spark, stock, period, interval):
-    data = yf.download(stock, period=period, interval=interval)
+    print("Downloading " + stock +
+          " market data. Period: " + period +
+          ". Interval: " + interval + ".")
+    try:
+        data = yf.download(stock, period=period, interval=interval)
+        data['DateTime'] = data.index
 
-    data['DateTime'] = data.index
+        dataframe = spark.createDataFrame(data)
 
-    dataframe = spark.createDataFrame(data)
+    except Exception:
+        raise Exception("Symbol " + stock + " not found")
+
     return dataframe
 
 
@@ -26,7 +33,14 @@ spk = SparkSession.builder \
     .appName("SparkByExamples.com") \
     .getOrCreate()
 
-stk_array = ["AAPL", "GOOGL", "SSNLF", "MSFT", "TSLA", "DELL", "META"]
+stk_array = [["AAPL", "max", "1d"],
+             ["GOOGL", "max", "1d"],
+             ["SSNLF", "max", "1d"],
+             ["MSFT", "max", "1d"],
+             ["TSLA", "max", "1d"],
+             ["DELL", "max", "1d"],
+             ["META", "max", "1d"]]
+
 for stk in stk_array:
-    df = download_market_data(spk, stk, "max", "1d")
-    write_market_data(df, stk, "max", "1d")
+    df = download_market_data(spk, stk[0], stk[1], stk[2])
+    write_market_data(df, stk[0], stk[1], stk[2])
