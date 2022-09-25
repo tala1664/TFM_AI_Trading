@@ -1,7 +1,7 @@
 import yfinance as yf
 from pyspark.sql import SparkSession
 
-stock = "GOOGL"
+stock = "AAPL"
 
 spark = SparkSession.builder \
     .master("local[1]") \
