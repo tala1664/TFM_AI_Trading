@@ -1,4 +1,6 @@
 import yfinance as yf
+import os
+import sys
 from pyspark.sql import SparkSession
 
 
@@ -27,6 +29,9 @@ def write_market_data(dataframe, stock, period, interval):
                                                              "_interval=" + interval +
                                                              ".parquet")
 
+
+os.environ['PYSPARK_PYTHON'] = sys.executable
+os.environ['PYSPARK_DRIVER_PYTHON'] = sys.executable
 
 spk = SparkSession.builder \
     .master("local[1]") \
