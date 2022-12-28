@@ -71,23 +71,25 @@ def write_stock_log(spark, stock, period, interval):
 def read_stock_log(spark):
     return spark.read.load("../data/stock_inventory.parquet")
 
-def write_portfolio_list(spark, stock_list, num_shares_list):
+
+def write_portfolio_list(spark, stock_list, num_shares_list, min_date, max_date):
     try:
         df = spark.read.load("../data/portfolio_inventory.parquet")
         id_count = df.select("ID").rdd.max()[0] + 1
         new_row = spark.createDataFrame(
-            [[id_count, stock_list, num_shares_list]],
-            ["ID", "Stock_List", "Number_Shares_List"])
+            [[id_count, stock_list, num_shares_list, min_date, max_date]],
+            ["ID", "Stock_List", "Number_Shares_List", "Min_Date", "Max_Date"])
         df_to_write = df.union(new_row)
 
     except:
         df_to_write = spark.createDataFrame(
-            [[1, stock_list, num_shares_list]],
-            ["ID", "Stock_List", "Number_Shares_List"])
+            [[1, stock_list, num_shares_list, min_date, max_date]],
+            ["ID", "Stock_List", "Number_Shares_List", "Min_Date", "Max_Date"])
 
     df_to_write.write.format("parquet").mode("overwrite").save("../data/temp/portfolio_inventory.parquet")
     df = spark.read.load("../data/temp/portfolio_inventory.parquet")
     df.write.format("parquet").mode("overwrite").save("../data/portfolio_inventory.parquet")
+
 
 def read_portfolio_list(spark):
     return spark.read.load("../data/portfolio_inventory.parquet")

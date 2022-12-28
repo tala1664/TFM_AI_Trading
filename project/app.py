@@ -4,6 +4,7 @@ from io_stockdata.io_stockdata import download_stock_data, write_stock_data, \
     read_stock_data, read_stock_log, read_portfolio_list, write_portfolio_list
 from display.display_utils import display_graph
 from pyspark.sql import SparkSession
+import datetime
 
 
 def get_valid_period():
@@ -51,7 +52,9 @@ def main():
                            "1. Download stock data.\n" +
                            "2. Show stock graph. \n" +
                            "3. Update ALL. \n" +
-                           "4. Create Portfolio. \n"))
+                           "4. Create Portfolio. \n" +
+                           "5. Show Portfolio Table. \n"
+                           "6. Show Stock Table. \n"))
 
         if option == 1:
             try:
@@ -91,15 +94,47 @@ def main():
             list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
             stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(",")
             stk_list = [i for i in stk_list if i in list_stock]
+            df_stock = df_stock.filter(df_stock.Stock.isin(stk_list))
+            list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
+            list_period = df_stock.select("Period").rdd.flatMap(lambda x: x).collect()
+            list_interval = df_stock.select("Interval").rdd.flatMap(lambda x: x).collect()
             print("Invalid stock names are removed. List of stocks of the portfolio: ")
             print(stk_list)
             num_shares_list = []
-            for i in stk_list:
-                num_shares = int(input("Please, input the number of shares of " + i + ": "))
+            min_date = datetime.datetime(1000, 1, 1)
+            max_date = datetime.datetime.now()
+            for i in range(len(list_stock)):
+
+                num_shares = int(input("Please, input the number of shares of " + list_stock[i] + ": "))
                 num_shares_list.append(num_shares)
-            write_portfolio_list(spark, stk_list, num_shares_list)
+
+                stock_df = read_stock_data(spark, list_stock[i], list_period[i], list_interval[i])
+
+                min_date_aux = stock_df.select("DateTime").rdd.min()[0]
+                max_date_aux = stock_df.select("DateTime").rdd.max()[0]
+
+                if min_date_aux > min_date:
+                    min_date = min_date_aux
+
+                if max_date_aux < max_date:
+                    max_date = max_date_aux
+
+            write_portfolio_list(spark, stk_list, num_shares_list, min_date, max_date)
             read_portfolio_list(spark).show()
 
+        elif option == 5:
+            read_portfolio_list(spark).show()
+
+        elif option == 6:
+            try:
+                read_stock_log(spark).orderBy("Stock").show()
+                stk = input("Please, input a valid stock name: ").upper()
+                period = get_valid_period()
+                interval = get_valid_interval()
+                df = read_stock_data(spark, stk, period, interval)
+                df.show()
+            except:
+                print("Empty data, try option -> 1. Download stock data.\n")
 
 
 if __name__ == "__main__":
