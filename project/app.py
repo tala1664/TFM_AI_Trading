@@ -1,6 +1,7 @@
 import os
 import sys
-from io_stockdata.io_stockdata import download_stock_data, write_stock_data, read_stock_data, read_stock_log
+from io_stockdata.io_stockdata import download_stock_data, write_stock_data, \
+    read_stock_data, read_stock_log, read_portfolio_list, write_portfolio_list
 from display.display_utils import display_graph
 from pyspark.sql import SparkSession
 
@@ -49,7 +50,8 @@ def main():
                            "0. Exit\n" +
                            "1. Download stock data.\n" +
                            "2. Show stock graph. \n" +
-                           "3. Update ALL. \n"))
+                           "3. Update ALL. \n" +
+                           "4. Create Portfolio. \n"))
 
         if option == 1:
             try:
@@ -75,13 +77,29 @@ def main():
 
         elif option == 3:
             df_stock = read_stock_log(spark)
-            df_stock.orderBy("Stock").show()
+            df_stock.orderBy("Stock").orderBy("Stock").show()
             list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
             list_period = df_stock.select("Period").rdd.flatMap(lambda x: x).collect()
             list_interval = df_stock.select("Interval").rdd.flatMap(lambda x: x).collect()
             for i in range(len(list_stock)):
                 df = download_stock_data(spark, list_stock[i], list_period[i], list_interval[i])
                 write_stock_data(spark, df, list_stock[i], list_period[i], list_interval[i])
+
+        elif option == 4:
+            df_stock = read_stock_log(spark)
+            df_stock.orderBy("Stock").filter("Period = 'max'").orderBy("Stock").show()
+            list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
+            stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(",")
+            stk_list = [i for i in stk_list if i in list_stock]
+            print("Invalid stock names are removed. List of stocks of the portfolio: ")
+            print(stk_list)
+            num_shares_list = []
+            for i in stk_list:
+                num_shares = int(input("Please, input the number of shares of " + i + ": "))
+                num_shares_list.append(num_shares)
+            write_portfolio_list(spark, stk_list, num_shares_list)
+            read_portfolio_list(spark).show()
+
 
 
 if __name__ == "__main__":
