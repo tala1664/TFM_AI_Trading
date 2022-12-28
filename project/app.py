@@ -39,25 +39,30 @@ def main():
         .appName("AI_Trading") \
         .getOrCreate()
 
-    option = int(input("Select a valid option: \n" +
-                       "1. Download stock data.\n" +
-                       "2. Show stock graph. \n"))
+    option = 99999999
 
-    if option == 1:
+    while option != 0:
 
-        stk = input("Please, input a valid stock name: ")
-        period = get_valid_period()
-        interval = get_valid_interval()
-        df = download_stock_data(spark, stk, period, interval)
-        write_stock_data(df, stk, period, interval)
+        option = int(input("Select a valid option: \n" +
+                           "0. Exit\n" +
+                           "1. Download stock data.\n" +
+                           "2. Show stock graph. \n"))
 
-    elif option == 2:
+        if option == 1:
 
-        stk = input("Please, input a valid stock name: ")
-        period = get_valid_period()
-        interval = get_valid_interval()
-        df = read_stock_data(spark, stk, period, interval)
-        display_graph(df, "DateTime", "Close")
+            stk = input("Please, input a valid stock name: ")
+            period = get_valid_period()
+            interval = get_valid_interval()
+            df = download_stock_data(spark, stk, period, interval)
+            write_stock_data(df, stk, period, interval)
+
+        elif option == 2:
+
+            stk = input("Please, input a valid stock name: ")
+            period = get_valid_period()
+            interval = get_valid_interval()
+            df = read_stock_data(spark, stk, period, interval)
+            display_graph(df, "DateTime", "Close", stk)
 
 
 if __name__ == "__main__":
