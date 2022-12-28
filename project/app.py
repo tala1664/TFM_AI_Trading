@@ -1,6 +1,6 @@
 import os
 import sys
-from io_stockdata.io_stockdata import download_stock_data, write_stock_data, read_stock_data
+from io_stockdata.io_stockdata import download_stock_data, write_stock_data, read_stock_data, read_stock_log
 from display.display_utils import display_graph
 from pyspark.sql import SparkSession
 
@@ -39,7 +39,9 @@ def main():
         .appName("AI_Trading") \
         .getOrCreate()
 
-    option = 99999999
+    spark.sparkContext.setLogLevel("ERROR")
+
+    option = -1
 
     while option != 0:
 
@@ -50,19 +52,22 @@ def main():
 
         if option == 1:
 
-            stk = input("Please, input a valid stock name: ")
+            stk = input("Please, input a valid stock name: ").upper()
             period = get_valid_period()
             interval = get_valid_interval()
             df = download_stock_data(spark, stk, period, interval)
-            write_stock_data(df, stk, period, interval)
+            write_stock_data(spark, df, stk, period, interval)
 
         elif option == 2:
-
-            stk = input("Please, input a valid stock name: ")
-            period = get_valid_period()
-            interval = get_valid_interval()
-            df = read_stock_data(spark, stk, period, interval)
-            display_graph(df, "DateTime", "Close", stk)
+            try:
+                read_stock_log(spark).show()
+                stk = input("Please, input a valid stock name: ").upper()
+                period = get_valid_period()
+                interval = get_valid_interval()
+                df = read_stock_data(spark, stk, period, interval)
+                display_graph(df, "DateTime", "Close", stk)
+            except:
+                print("Empty data, try option -> 1. Download stock data.\n")
 
 
 if __name__ == "__main__":
