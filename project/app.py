@@ -48,19 +48,23 @@ def main():
         option = int(input("Select a valid option: \n" +
                            "0. Exit\n" +
                            "1. Download stock data.\n" +
-                           "2. Show stock graph. \n"))
+                           "2. Show stock graph. \n" +
+                           "3. Update ALL. \n"))
 
         if option == 1:
+            try:
+                stk = input("Please, input a valid stock name: ").upper()
+                period = get_valid_period()
+                interval = get_valid_interval()
+                df = download_stock_data(spark, stk, period, interval)
+                write_stock_data(spark, df, stk, period, interval)
 
-            stk = input("Please, input a valid stock name: ").upper()
-            period = get_valid_period()
-            interval = get_valid_interval()
-            df = download_stock_data(spark, stk, period, interval)
-            write_stock_data(spark, df, stk, period, interval)
+            except:
+                print("Symbol " + stk + " not found")
 
         elif option == 2:
             try:
-                read_stock_log(spark).show()
+                read_stock_log(spark).orderBy("Stock").show()
                 stk = input("Please, input a valid stock name: ").upper()
                 period = get_valid_period()
                 interval = get_valid_interval()
@@ -68,6 +72,16 @@ def main():
                 display_graph(df, "DateTime", "Close", stk)
             except:
                 print("Empty data, try option -> 1. Download stock data.\n")
+
+        elif option == 3:
+            df_stock = read_stock_log(spark)
+            df_stock.orderBy("Stock").show()
+            list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
+            list_period = df_stock.select("Period").rdd.flatMap(lambda x: x).collect()
+            list_interval = df_stock.select("Interval").rdd.flatMap(lambda x: x).collect()
+            for i in range(len(list_stock)):
+                df = download_stock_data(spark, list_stock[i], list_period[i], list_interval[i])
+                write_stock_data(spark, df, list_stock[i], list_period[i], list_interval[i])
 
 
 if __name__ == "__main__":
