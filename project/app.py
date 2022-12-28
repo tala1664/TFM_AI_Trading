@@ -80,7 +80,7 @@ def main():
 
         elif option == 3:
             df_stock = read_stock_log(spark)
-            df_stock.orderBy("Stock").orderBy("Stock").show()
+            df_stock.orderBy("Stock").orderBy("Stock").show(truncate=False)
             list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
             list_period = df_stock.select("Period").rdd.flatMap(lambda x: x).collect()
             list_interval = df_stock.select("Interval").rdd.flatMap(lambda x: x).collect()
@@ -90,7 +90,7 @@ def main():
 
         elif option == 4:
             df_stock = read_stock_log(spark)
-            df_stock.orderBy("Stock").filter("Period = 'max'").orderBy("Stock").show()
+            df_stock.orderBy("Stock").filter("Period = 'max'").orderBy("Stock").show(truncate=False)
             list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
             stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(",")
             stk_list = [i for i in stk_list if i in list_stock]
@@ -120,19 +120,19 @@ def main():
                     max_date = max_date_aux
 
             write_portfolio_list(spark, stk_list, num_shares_list, min_date, max_date)
-            read_portfolio_list(spark).show()
+            read_portfolio_list(spark).show(truncate=False)
 
         elif option == 5:
-            read_portfolio_list(spark).show()
+            read_portfolio_list(spark).show(truncate=False)
 
         elif option == 6:
             try:
-                read_stock_log(spark).orderBy("Stock").show()
+                read_stock_log(spark).orderBy("Stock").show(truncate=False)
                 stk = input("Please, input a valid stock name: ").upper()
                 period = get_valid_period()
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
-                df.show()
+                df.show(truncate=False)
             except:
                 print("Empty data, try option -> 1. Download stock data.\n")
 
