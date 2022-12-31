@@ -139,12 +139,15 @@ def main():
                 print("Empty data, try option -> 1. Download stock data.\n")
         elif option == 7:
             df_portfolio = read_portfolio_list(spark)
-            df_portfolio.show(truncate=False)
+            df_portfolio.orderBy("ID").show(truncate=False)
             portfolio = int(input("Please, input a portfolio ID: "))
             stocks = df_portfolio.filter(df_portfolio.ID == portfolio) \
                 .select("Stock_List").rdd.flatMap(lambda x: x).collect()[0]
-            print(stocks)
-            correlation_matrix_portfolio(spark, stocks, min_date, max_date)
+            min_date = df_portfolio.filter(df_portfolio.ID == portfolio) \
+                .select("Min_Date").rdd.flatMap(lambda x: x).collect()[0]
+            max_date = df_portfolio.filter(df_portfolio.ID == portfolio) \
+                .select("Max_Date").rdd.flatMap(lambda x: x).collect()[0]
+            correlation_matrix_portfolio(spark, stocks, min_date, max_date).show()
 
 
 if __name__ == "__main__":
