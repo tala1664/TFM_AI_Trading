@@ -38,29 +38,29 @@ def write_stock_log(spark, stock, period, interval):
             df_to_write = df.withColumn("Last_Update",
                                         f.when(df.Stock == stock,
                                                f.date_format(f.current_timestamp(),
-                                                             "dd/MM/yyyy hh:mm")).otherwise(
+                                                             "dd/MM/yyyy HH:mm")).otherwise(
                                             df.Last_Update))
             print("Log Updated " + stock +
                   "_period=" + period +
-                  "_interval=" + interval)
+                  "_interval=" + interval + "\n")
 
         else:
             new_row = spark.createDataFrame(
                 [[stock, period, interval]],
                 ["Stock", "Period", "Interval"])
-            new_row = new_row.withColumn("Last_Update", f.date_format(f.current_timestamp(), "dd/MM/yyyy hh:mm"))
+            new_row = new_row.withColumn("Last_Update", f.date_format(f.current_timestamp(), "dd/MM/yyyy HH:mm"))
             df_to_write = df.union(new_row)
 
             print("Log Created " + stock +
                   "_period=" + period +
-                  "_interval=" + interval)
+                  "_interval=" + interval + "\n")
 
     except:
         df_to_write = spark.createDataFrame(
             [[stock, period, interval]],
             ["Stock", "Period", "Interval"])
 
-        df_to_write = df_to_write.withColumn("Last_Update", f.date_format(f.current_timestamp(), "dd/MM/yyyy hh:mm"))
+        df_to_write = df_to_write.withColumn("Last_Update", f.date_format(f.current_timestamp(), "dd/MM/yyyy HH:mm"))
         print("Log Created")
 
     df_to_write.write.format("parquet").mode("overwrite").save("../data/temp/stock_inventory.parquet")

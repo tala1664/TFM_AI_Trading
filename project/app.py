@@ -2,6 +2,7 @@ import os
 import sys
 from io_stockdata.io_stockdata import download_stock_data, write_stock_data, \
     read_stock_data, read_stock_log, read_portfolio_list, write_portfolio_list
+from finance.finance_utils import correlation_matrix_portfolio
 from display.display_utils import display_graph
 from pyspark.sql import SparkSession
 import datetime
@@ -53,8 +54,9 @@ def main():
                            "2. Show stock graph. \n" +
                            "3. Update ALL. \n" +
                            "4. Create Portfolio. \n" +
-                           "5. Show Portfolio Table. \n"
-                           "6. Show Stock Table. \n"))
+                           "5. Show Portfolio Table. \n" +
+                           "6. Show Stock Table. \n" +
+                           "7. Calculate portfolio correlation matrix. \n"))
 
         if option == 1:
             try:
@@ -135,6 +137,14 @@ def main():
                 df.show(truncate=False)
             except:
                 print("Empty data, try option -> 1. Download stock data.\n")
+        elif option == 7:
+            df_portfolio = read_portfolio_list(spark)
+            df_portfolio.show(truncate=False)
+            portfolio = int(input("Please, input a portfolio ID: "))
+            stocks = df_portfolio.filter(df_portfolio.ID == portfolio) \
+                .select("Stock_List").rdd.flatMap(lambda x: x).collect()[0]
+            print(stocks)
+            correlation_matrix_portfolio(spark, stocks, min_date, max_date)
 
 
 if __name__ == "__main__":
