@@ -1,5 +1,6 @@
 import yfinance as yf
 import pyspark.sql.functions as f
+from pyspark.sql.window import Window
 import numpy
 
 
@@ -12,6 +13,29 @@ def download_stock_data(spark, stock, period, interval):
     data['DateTime'] = data.index
 
     dataframe = spark.createDataFrame(data)
+
+    dataframe = dataframe.withColumn("ID", f.monotonically_increasing_id())
+
+    dataframe = dataframe.withColumn("ID2", f.when(f.col("ID") % 2 > 0, f.col("ID") - 1).otherwise(f.col("ID")))
+    dataframe = dataframe.withColumn("ID3", f.when(f.col("ID") % 2 > 0, f.col("ID") + 1).otherwise(f.col("ID")))
+
+    w1 = Window().partitionBy("ID2").orderBy("ID")
+
+    dataframe = dataframe.withColumn("Performance1",
+                                     (f.col("close") - f.lag("close", 1).over(w1)) / f.lag("close", 1).over(w1))
+
+    w2 = Window().partitionBy("ID3").orderBy("ID")
+
+    dataframe = dataframe.withColumn("Performance2",
+                                     (f.col("close") - f.lag("close", 1).over(w2)) / f.lag("close", 1).over(w2))
+
+    dataframe = dataframe.withColumn("Performance", f.when(f.col("Performance1").isNotNull(),
+                                                           f.col("Performance1")).otherwise(f.col("Performance2")))
+
+    dataframe = dataframe.withColumn("Performance", f.round("Performance", 5))
+
+    columns_to_drop = ["ID2", "ID3", "Performance1", "Performance2"]
+    dataframe = dataframe.drop(*columns_to_drop)
 
     return dataframe
 
