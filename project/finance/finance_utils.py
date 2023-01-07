@@ -33,6 +33,8 @@ def covariance_matrix_portfolio(spark, df_portfolio, id_portfolio):
 
     stock_list.insert(0, "Covariance")
     df = spark.createDataFrame(cov_matrix, stock_list)
+    df.write.format("parquet").mode("overwrite").save("../data/portfolios/covariance_matrix/portfolio_" +
+                                                      str(id_portfolio) + ".parquet")
 
     return df
 
@@ -64,6 +66,9 @@ def correlation_matrix_portfolio(spark, df_portfolio, id_portfolio):
 
     stock_list.insert(0, "Correlations")
     df = spark.createDataFrame(matrix, stock_list)
+
+    df.write.format("parquet").mode("overwrite").save("../data/portfolios/correlation_matrix/portfolio_" +
+                                                      str(id_portfolio) + ".parquet")
 
     return df
 
