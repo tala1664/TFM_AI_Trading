@@ -4,7 +4,37 @@ from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import scipy.stats as stats
 import datetime
+import numpy as np
 from io_stockdata.io_stockdata import read_stock_data, write_portfolio_list, read_portfolio_list
+
+
+def covariance_matrix_portfolio(spark, df_portfolio, id_portfolio):
+    matrix = []
+    stock_close_prices = []
+
+    stock_list = df_portfolio.filter(df_portfolio.ID == id_portfolio) \
+        .select("Stock_List").rdd.flatMap(lambda x: x).collect()[0]
+    min_date = df_portfolio.filter(df_portfolio.ID == id_portfolio) \
+        .select("Min_Date").rdd.flatMap(lambda x: x).collect()[0]
+    max_date = df_portfolio.filter(df_portfolio.ID == id_portfolio) \
+        .select("Max_Date").rdd.flatMap(lambda x: x).collect()[0]
+
+    for stock in stock_list:
+        df_stock = read_stock_data(spark, stock, "max", "1d")
+        df_stock = df_stock.filter(df_stock.DateTime > min_date) \
+            .filter(df_stock.DateTime < max_date)
+
+        stock_close_prices.append(df_stock.select("Close").rdd.flatMap(lambda x: x).collect())
+
+    cov_matrix = np.cov(stock_close_prices, bias=False).tolist()
+
+    for arr in cov_matrix:
+        arr.insert(0, stock_list[cov_matrix.index(arr)])
+
+    stock_list.insert(0, "Covariance")
+    df = spark.createDataFrame(cov_matrix, stock_list)
+
+    return df
 
 
 def correlation_matrix_portfolio(spark, df_portfolio, id_portfolio):

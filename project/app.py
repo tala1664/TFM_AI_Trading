@@ -2,7 +2,7 @@ import os
 import sys
 from io_stockdata.io_stockdata import download_stock_data, write_stock_data, \
     read_stock_data, read_stock_log, read_portfolio_list
-from finance.finance_utils import correlation_matrix_portfolio, create_portfolio
+from finance.finance_utils import correlation_matrix_portfolio, create_portfolio, covariance_matrix_portfolio
 from display.display_utils import display_graph
 from pyspark.sql import SparkSession
 
@@ -55,7 +55,8 @@ def main():
                            "4. Update ALL Stocks. \n" +
                            "5. Create Portfolio. \n" +
                            "6. Show Portfolio Table. \n" +
-                           "7. Calculate portfolio correlation matrix. \n"))
+                           "7. Calculate portfolio correlation matrix. \n" +
+                           "8. Calculate portfolio covariance matrix. \n"))
 
         if option == 1:
             stk = input("Please, input a valid stock name: ").upper()
@@ -116,6 +117,12 @@ def main():
             df_portfolio.orderBy("ID").show(truncate=False)
             id_portfolio = int(input("Please, input a portfolio ID: "))
             correlation_matrix_portfolio(spark, df_portfolio, id_portfolio).show()
+
+        elif option == 8:
+            df_portfolio = read_portfolio_list(spark)
+            df_portfolio.orderBy("ID").show(truncate=False)
+            id_portfolio = int(input("Please, input a portfolio ID: "))
+            covariance_matrix_portfolio(spark, df_portfolio, id_portfolio).show()
 
 
 if __name__ == "__main__":
