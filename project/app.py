@@ -51,12 +51,13 @@ def main():
                            "0. Exit\n" +
                            "1. Download stock data.\n" +
                            "2. Show Stock graph. \n" +
-                           "3. Show Stock Table. \n" +
-                           "4. Update ALL Stocks. \n" +
-                           "5. Create Portfolio. \n" +
-                           "6. Show Portfolio Table. \n" +
-                           "7. Calculate portfolio correlation matrix. \n" +
-                           "8. Calculate portfolio covariance matrix. \n"))
+                           "3. Show Stock Performance graph. \n" +
+                           "4. Show Stock Table. \n" +
+                           "5. Update ALL Stocks. \n" +
+                           "6. Create Portfolio. \n" +
+                           "7. Show Portfolio Table. \n" +
+                           "8. Calculate portfolio correlation matrix. \n" +
+                           "9. Calculate portfolio covariance matrix. \n"))
 
         if option == 1:
             stk = input("Please, input a valid stock name: ").upper()
@@ -83,6 +84,17 @@ def main():
 
         elif option == 3:
             try:
+                read_stock_log(spark).orderBy("Stock").show()
+                stk = input("Please, input a valid stock name: ").upper()
+                period = get_valid_period()
+                interval = get_valid_interval()
+                df = read_stock_data(spark, stk, period, interval)
+                display_graph(df, "DateTime", "Performance", stk)
+            except (TypeError, AttributeError):
+                print("Empty data, try option -> 1. Download stock data.\n")
+
+        elif option == 4:
+            try:
                 read_stock_log(spark).orderBy("Stock").show(truncate=False)
                 stk = input("Please, input a valid stock name: ").upper()
                 period = get_valid_period()
@@ -92,7 +104,7 @@ def main():
             except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
-        elif option == 4:
+        elif option == 5:
             df_stock = read_stock_log(spark)
             df_stock.orderBy("Stock").show(truncate=False)
             list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
@@ -102,23 +114,23 @@ def main():
                 df = download_stock_data(spark, list_stock[i], list_period[i], list_interval[i])
                 write_stock_data(spark, df, list_stock[i], list_period[i], list_interval[i])
 
-        elif option == 5:
+        elif option == 6:
             df_stock = read_stock_log(spark)
             df_stock.orderBy("Stock").filter("Period = 'max'").orderBy("Stock").show(truncate=False)
             list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
             stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(",")
             create_portfolio(spark, df_stock, stk_list, list_stock)
 
-        elif option == 6:
+        elif option == 7:
             read_portfolio_list(spark).show(truncate=False)
 
-        elif option == 7:
+        elif option == 8:
             df_portfolio = read_portfolio_list(spark)
             df_portfolio.orderBy("ID").show(truncate=False)
             id_portfolio = int(input("Please, input a portfolio ID: "))
             correlation_matrix_portfolio(spark, df_portfolio, id_portfolio).show()
 
-        elif option == 8:
+        elif option == 9:
             df_portfolio = read_portfolio_list(spark)
             df_portfolio.orderBy("ID").show(truncate=False)
             id_portfolio = int(input("Please, input a portfolio ID: "))
