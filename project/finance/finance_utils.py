@@ -9,8 +9,7 @@ from io_stockdata.io_stockdata import read_stock_data, write_portfolio_list, rea
 
 
 def covariance_matrix_portfolio(spark, df_portfolio, id_portfolio):
-    matrix = []
-    stock_close_prices = []
+    stock_performance = []
 
     stock_list = df_portfolio.filter(df_portfolio.ID == id_portfolio) \
         .select("Stock_List").rdd.flatMap(lambda x: x).collect()[0]
@@ -24,9 +23,9 @@ def covariance_matrix_portfolio(spark, df_portfolio, id_portfolio):
         df_stock = df_stock.filter(df_stock.DateTime > min_date) \
             .filter(df_stock.DateTime < max_date)
 
-        stock_close_prices.append(df_stock.select("Close").rdd.flatMap(lambda x: x).collect())
+        stock_performance.append(df_stock.select("Performance").rdd.flatMap(lambda x: x).collect())
 
-    cov_matrix = np.cov(stock_close_prices, bias=False).round(decimals=5).tolist()
+    cov_matrix = np.cov(stock_performance, bias=False).round(decimals=5).tolist()
 
     for arr in cov_matrix:
         arr.insert(0, stock_list[cov_matrix.index(arr)])
