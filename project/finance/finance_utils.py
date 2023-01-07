@@ -26,7 +26,7 @@ def covariance_matrix_portfolio(spark, df_portfolio, id_portfolio):
 
         stock_close_prices.append(df_stock.select("Close").rdd.flatMap(lambda x: x).collect())
 
-    cov_matrix = np.cov(stock_close_prices, bias=False).tolist()
+    cov_matrix = np.cov(stock_close_prices, bias=False).round(decimals=5).tolist()
 
     for arr in cov_matrix:
         arr.insert(0, stock_list[cov_matrix.index(arr)])
