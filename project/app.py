@@ -3,8 +3,9 @@ import sys
 from io_stockdata.io_stockdata import download_stock_data, write_stock_data, \
     read_stock_data, read_stock_log, read_portfolio_list
 from finance.finance_utils import correlation_matrix_portfolio, create_portfolio, covariance_matrix_portfolio
-from display.display_utils import display_graph
+from display.display_utils import display_line_graph, display_bar_graph
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import year
 
 
 def get_valid_period():
@@ -78,7 +79,7 @@ def main():
                 period = get_valid_period()
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
-                display_graph(df, "DateTime", "Close", stk)
+                display_line_graph(df, "DateTime", "Close", stk)
             except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
@@ -89,7 +90,7 @@ def main():
                 period = get_valid_period()
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
-                display_graph(df, "DateTime", "Performance", stk)
+                display_line_graph(df, "DateTime", "Performance", stk)
             except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
@@ -105,8 +106,8 @@ def main():
                 print("Empty data, try option -> 1. Download stock data.\n")
 
         elif option == 5:
-            df_stock = read_stock_log(spark)
-            df_stock.orderBy("Stock").show(truncate=False)
+            df_stock = read_stock_log(spark).orderBy("Stock")
+            df_stock.show(truncate=False)
             list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
             list_period = df_stock.select("Period").rdd.flatMap(lambda x: x).collect()
             list_interval = df_stock.select("Interval").rdd.flatMap(lambda x: x).collect()

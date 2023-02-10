@@ -2,6 +2,7 @@ import sys
 from os import path
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
 import scipy.stats as stats
 import datetime
 import numpy as np
@@ -24,7 +25,7 @@ def covariance_matrix_portfolio(spark, df_portfolio, id_portfolio):
             .filter(df_stock.DateTime < max_date)
 
         stock_performance.append(df_stock.select("Performance").rdd.flatMap(lambda x: x).collect())
-
+    print(stock_performance)
     cov_matrix = np.cov(stock_performance, bias=False).round(decimals=5).tolist()
 
     for arr in cov_matrix:
