@@ -3,7 +3,7 @@ import sys
 from io_stockdata.io_stockdata import download_stock_data, write_stock_data, \
     read_stock_data, read_stock_log, read_portfolio_list
 from finance.finance_utils import correlation_matrix_portfolio, create_portfolio, covariance_matrix_portfolio
-from display.display_utils import display_line_graph, display_bar_graph
+from display.display_utils import display_line_graph, display_bar_graph, interactive_candlestick_graph
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import year
 
@@ -79,8 +79,8 @@ def main():
                 period = get_valid_period()
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
-                display_line_graph(df, "DateTime", "Close", stk)
-            except (TypeError, AttributeError):
+                interactive_candlestick_graph(df, stk)
+            except:
                 print("Empty data, try option -> 1. Download stock data.\n")
 
         elif option == 3:
@@ -91,7 +91,7 @@ def main():
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
                 display_line_graph(df, "DateTime", "Performance", stk)
-            except (TypeError, AttributeError):
+            except:
                 print("Empty data, try option -> 1. Download stock data.\n")
 
         elif option == 4:
@@ -102,7 +102,7 @@ def main():
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
                 df.show(truncate=False)
-            except (TypeError, AttributeError):
+            except:
                 print("Empty data, try option -> 1. Download stock data.\n")
 
         elif option == 5:
