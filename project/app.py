@@ -1,8 +1,10 @@
+import datetime
 import os
 import sys
 from io_stockdata.io_stockdata import download_stock_data, write_stock_data, \
     read_stock_data, read_stock_log, read_portfolio_list
-from finance.finance_utils import correlation_matrix_portfolio, create_portfolio, covariance_matrix_portfolio
+from finance.finance_utils import correlation_matrix_portfolio, create_portfolio, covariance_matrix_portfolio, \
+    avg_stock_return
 from display.display_utils import interactive_candlestick_graph, interactive_performance_graph
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import year
@@ -116,14 +118,20 @@ def main():
                 write_stock_data(spark, df, list_stock[i], list_period[i], list_interval[i])
 
         elif option == 6:
-            df_stock = read_stock_log(spark)
-            df_stock.orderBy("Stock").filter("Period = 'max'").orderBy("Stock").show(truncate=False)
-            list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
-            stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(",")
-            create_portfolio(spark, df_stock, stk_list, list_stock)
+            try:
+                df_stock = read_stock_log(spark)
+                df_stock.orderBy("Stock").filter("Period = 'max'").orderBy("Stock").show(truncate=False)
+                list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
+                stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(",")
+                create_portfolio(spark, df_stock, stk_list, list_stock)
+            except:
+                print("ERROR. Please try again")
 
         elif option == 7:
-            read_portfolio_list(spark).orderBy("ID").show(truncate=False)
+            try:
+                read_portfolio_list(spark).orderBy("ID").show(truncate=False)
+            except:
+                print("No porftolio founded, please create one with option 6.")
 
         elif option == 8:
             df_portfolio = read_portfolio_list(spark)
