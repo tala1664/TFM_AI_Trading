@@ -23,9 +23,7 @@ def covariance_matrix_portfolio(spark, df_portfolio, id_portfolio):
         df_stock = read_stock_data(spark, stock, "max", "1d")
         df_stock = df_stock.filter(df_stock.DateTime > min_date) \
             .filter(df_stock.DateTime < max_date)
-
         stock_performance.append(df_stock.select("Performance").rdd.flatMap(lambda x: x).collect())
-    print(stock_performance)
     cov_matrix = np.cov(stock_performance, bias=False).round(decimals=5).tolist()
 
     for arr in cov_matrix:
@@ -87,6 +85,9 @@ def create_portfolio(spark, df_stock, stk_list, list_stock):
     for i in range(len(list_stock)):
 
         num_shares = int(input("Please, input the number of shares of " + list_stock[i] + ": "))
+        buy_date = input("Please, input the date (format YYYY-MM-DD) when you bought " + list_stock[i] + " shares: ")
+        buy_date_split = buy_date.split("-")
+        buy_date_datetime = datetime.datetime(int(buy_date_split[0]), int(buy_date_split[1]), int(buy_date_split[2]))
         num_shares_list.append(num_shares)
 
         stock_df = read_stock_data(spark, list_stock[i], list_period[i], list_interval[i])
@@ -96,6 +97,9 @@ def create_portfolio(spark, df_stock, stk_list, list_stock):
 
         if min_date_aux > min_date:
             min_date = min_date_aux
+
+        if buy_date_datetime > min_date:
+            min_date = buy_date_datetime
 
         if max_date_aux < max_date:
             max_date = max_date_aux

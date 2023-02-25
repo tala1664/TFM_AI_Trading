@@ -123,7 +123,7 @@ def main():
             create_portfolio(spark, df_stock, stk_list, list_stock)
 
         elif option == 7:
-            read_portfolio_list(spark).show(truncate=False)
+            read_portfolio_list(spark).orderBy("ID").show(truncate=False)
 
         elif option == 8:
             df_portfolio = read_portfolio_list(spark)
