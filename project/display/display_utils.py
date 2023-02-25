@@ -20,12 +20,9 @@ def display_bar_graph(df, x_col, y_col, stock):
 def interactive_candlestick_graph(df, stock):
     df_pandas = df.select("*").toPandas()
 
-    # Convert the date column to a datetime object
     df_pandas["DateTime"] = pd.to_datetime(df_pandas["DateTime"])
-
     df_pandas["ma"] = df_pandas["Close"].rolling(window=30).mean()
 
-    # Create a Candlestick chart using Plotly
     fig = go.Figure(data=[
         go.Candlestick(x=df_pandas["DateTime"],
                        open=df_pandas["Open"],
@@ -39,8 +36,20 @@ def interactive_candlestick_graph(df, stock):
                              name="30-Day Moving Average",
                              line=dict(color='blue')))
 
-    # Add a title and axis labels to the figure
     fig.update_layout(title=stock, xaxis_title="Date", yaxis_title="Price")
 
-    # Display the plot in a Jupyter notebook
+    fig.show()
+
+
+def interactive_performance_graph(df, stock):
+    df_pandas = df.select("*").toPandas()
+    df_pandas["DateTime"] = pd.to_datetime(df_pandas["DateTime"])
+
+    fig = go.Figure(data=go.Scatter(x=df_pandas["DateTime"],
+                                    y=df_pandas["Performance"],
+                                    name="Daily Percentage Change"))
+
+    fig.update_layout(title=stock + " Performance Percentage Variation", xaxis_title="Date",
+                      yaxis_title="Percentage Change")
+
     fig.show()
