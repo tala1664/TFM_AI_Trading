@@ -80,7 +80,7 @@ def main():
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
                 interactive_candlestick_graph(df, stk)
-            except:
+            except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
         elif option == 3:
@@ -91,7 +91,7 @@ def main():
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
                 display_line_graph(df, "DateTime", "Performance", stk)
-            except:
+            except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
         elif option == 4:
@@ -102,7 +102,7 @@ def main():
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
                 df.show(truncate=False)
-            except:
+            except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
         elif option == 5:
