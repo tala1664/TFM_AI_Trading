@@ -53,3 +53,19 @@ def interactive_performance_graph(df, stock):
                       yaxis_title="Percentage Change")
 
     fig.show()
+
+
+def interactive_performance_prediction(df, data, predictions, training_data_len):
+    train = data[:training_data_len]
+    valid = data[training_data_len:]
+    valid['Predictions'] = predictions
+    train['Date'] = df.filter(['DateTime']).values[0: training_data_len, :]
+    valid['Date'] = df.filter(['DateTime']).values[training_data_len:, :]
+    train["Date"] = pd.to_datetime(train["Date"])
+    valid["Date"] = pd.to_datetime(valid["Date"])
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=train['Date'], y=train['Close'], name='Historic'))
+    fig.add_trace(go.Scatter(x=valid['Date'], y=valid['Close'], name='Real'))
+    fig.add_trace(go.Scatter(x=valid['Date'], y=valid['Predictions'], name='Predicted'))
+    fig.show()

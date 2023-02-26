@@ -53,9 +53,8 @@ x_train, y_train = np.array(x_train), np.array(y_train)
 x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
 
 model = tf.keras.models.Sequential([
-    tf.keras.layers.LSTM(50, return_sequences=True),
-    tf.keras.layers.Dropout(0.2),
-    tf.keras.layers.LSTM(units=50),
+    tf.keras.layers.LSTM(100, return_sequences=True),
+    tf.keras.layers.LSTM(100),
     tf.keras.layers.Dense(25),
     tf.keras.layers.Dense(1)
 ])
@@ -68,7 +67,7 @@ print(y_train.shape)
 print(x_train)
 print(y_train)
 
-model.fit(x_train, y_train, batch_size=1, epochs=1)
+model.fit(x_train, y_train, batch_size=1, epochs=2)
 
 test_data = scaled_data[training_data_len - 60:, :]
 
@@ -87,11 +86,13 @@ predictions = scaler.inverse_transform(predictions)
 
 rmse = np.sqrt(np.mean(predictions - y_test) ** 2)
 
+print(rmse)
+
 train = data[:training_data_len]
 valid = data[training_data_len:]
 valid['Predictions'] = predictions
 
-"""
+
 plt.figure(figsize=(16, 8))
 plt.title('Model')
 plt.xlabel('Date', fontsize=18)
@@ -100,7 +101,7 @@ plt.plot(train['Close'])
 plt.plot(valid[['Close', 'Predictions']])
 plt.legend(['Train', 'Val', 'Predictions'], loc='lower right')
 plt.show()
-"""
+
 
 df = read_stock_data(spark, "BBVA", "10y", "1d").toPandas()
 data = df.filter(['Close'])
@@ -139,7 +140,7 @@ pred_price = model.predict(X_test)
 pred_price = scaler.inverse_transform(pred_price)
 
 print(pred_price[0])
-
+"""
 for i in range(100):
 
     last_60_days_scaled = scaler.transform(last_60_days)
@@ -162,3 +163,4 @@ interval = "1d"
 model.save_weights('../model_weights/' + stock + "_period=" + period + "_interval=" + interval + '.h5')
 
 model.load_weights('../model_weights/' + stock + "_period=" + period + "_interval=" + interval + '.h5')
+"""

@@ -8,9 +8,10 @@ from finance.finance_utils import correlation_matrix_portfolio, create_portfolio
 from display.display_utils import interactive_candlestick_graph, interactive_performance_graph
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import year
-from ia_predict.ia_predict import prepare_train_data, build_model, get_prediction, save_model_weights, \
-    load_model_weights, predict_portfolio, train_portfolio
+from ia_predict.ia_predict import predict_portfolio, train_portfolio
 import tensorflow as tf
+import pandas as pd
+
 
 
 def get_valid_period():
@@ -50,6 +51,7 @@ def main():
     spark.sparkContext.setLogLevel('ERROR')
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     tf.get_logger().setLevel('ERROR')
+    pd.options.mode.chained_assignment = None
 
     option = -1
 
@@ -65,7 +67,9 @@ def main():
                                "6. Create Portfolio. \n" +
                                "7. Show Portfolio Table. \n" +
                                "8. Calculate portfolio correlation matrix. \n" +
-                               "9. Calculate portfolio covariance matrix. \n"))
+                               "9. Calculate portfolio covariance matrix. \n" +
+                               "10. Train model with portfolio. \n"
+                               "11. Get portfolio predictions. \n"))
         except:
             option = -1
 
