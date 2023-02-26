@@ -57,12 +57,12 @@ def train_model(model, x_train, y_train):
     model.fit(x_train, y_train, batch_size=1, epochs=1)
 
 
-def get_prediction(df, model, length):
+def get_prediction(df, model):
     scaler = MinMaxScaler(feature_range=(0, 1))
     df = df.toPandas()
     data = df.filter(['Close'])
 
-    last_60_days = data[-length:].values
+    last_60_days = data[-60:].values
 
     last_60_days_scaled = scaler.fit_transform(last_60_days)
     x_test = [last_60_days_scaled]
@@ -89,7 +89,7 @@ def save_model_weights_portfolio(model, stock, id_portfolio):
 
 
 def load_model_weights_portfolio(model, stock, id_portfolio):
-    return model.load_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '.h5')
+    model.load_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '.h5')
 
 
 def train_portfolio(spark, df_portfolio, id_portfolio):
@@ -121,6 +121,8 @@ def train_portfolio(spark, df_portfolio, id_portfolio):
 
 def predict_portfolio(spark, df_portfolio, id_portfolio):
     model = build_model()
+    model.build(input_shape=(1, 60, 1))
+    model.summary()
 
     stock_close_prices = {}
     predicted_next_prices = {}
@@ -139,12 +141,10 @@ def predict_portfolio(spark, df_portfolio, id_portfolio):
 
         stock_close_prices[stock] = df_stock.select("Close")
 
-    model.build(input_shape=(1, 60, 50))
-    model.summary()
     for stock in stock_close_prices:
         print("Loading weights for stock: " + stock + " Portfolio: " + str(id_portfolio))
-        model = load_model_weights_portfolio(model, stock, id_portfolio)
+        load_model_weights_portfolio(model, stock, id_portfolio)
         print("Getting prediction for " + stock + " Portfolio: " + str(id_portfolio))
-        predicted_next_prices[stock] = get_prediction(stock_close_prices[stock], model, 100)
+        predicted_next_prices[stock] = get_prediction(stock_close_prices[stock], model)
 
     print(predicted_next_prices)
