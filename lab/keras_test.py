@@ -6,9 +6,7 @@ import tensorflow as tf
 
 import os
 import sys
-
 import matplotlib.pyplot as plt
-
 plt.style.use('fivethirtyeight')
 
 from pyspark.sql import SparkSession
@@ -31,7 +29,7 @@ spark = SparkSession.builder \
 
 spark.sparkContext.setLogLevel("ERROR")
 
-df = read_stock_data(spark, "AAPL", "10y", "1d").toPandas()
+df = read_stock_data(spark, "BBVA", "10y", "1d").toPandas()
 
 data = df.filter(['Close'])
 dataset = data.values
@@ -65,7 +63,12 @@ model = tf.keras.models.Sequential([
 model.compile(optimizer='adam',
               loss='mean_squared_error')
 
-model.fit(x_train, y_train, batch_size=1, epochs=5)
+print(x_train.shape)
+print(y_train.shape)
+print(x_train)
+print(y_train)
+
+model.fit(x_train, y_train, batch_size=1, epochs=1)
 
 test_data = scaled_data[training_data_len - 60:, :]
 
@@ -88,8 +91,7 @@ train = data[:training_data_len]
 valid = data[training_data_len:]
 valid['Predictions'] = predictions
 
-print(valid.shape)
-
+"""
 plt.figure(figsize=(16, 8))
 plt.title('Model')
 plt.xlabel('Date', fontsize=18)
@@ -98,3 +100,65 @@ plt.plot(train['Close'])
 plt.plot(valid[['Close', 'Predictions']])
 plt.legend(['Train', 'Val', 'Predictions'], loc='lower right')
 plt.show()
+"""
+
+df = read_stock_data(spark, "BBVA", "10y", "1d").toPandas()
+data = df.filter(['Close'])
+
+last_60_days = data[-60:].values
+print(last_60_days)
+print(last_60_days.shape)
+
+last_60_days_scaled = scaler.transform(last_60_days)
+X_test = [last_60_days_scaled]
+X_test = np.array(X_test)
+X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+
+print(X_test)
+
+pred_price = model.predict(X_test)
+pred_price = scaler.inverse_transform(pred_price)
+
+print(pred_price[0])
+
+last_60_days = np.append(last_60_days, pred_price[0])
+last_60_days = np.reshape(last_60_days, (last_60_days.shape[0], 1))
+
+print(last_60_days)
+print(last_60_days.shape)
+
+
+last_60_days_scaled = scaler.transform(last_60_days)
+X_test = [last_60_days_scaled]
+X_test = np.array(X_test)
+X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+
+print(X_test)
+
+pred_price = model.predict(X_test)
+pred_price = scaler.inverse_transform(pred_price)
+
+print(pred_price[0])
+
+for i in range(100):
+
+    last_60_days_scaled = scaler.transform(last_60_days)
+    X_test = [last_60_days_scaled]
+    X_test = np.array(X_test)
+    X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+
+    pred_price = model.predict(X_test)
+    pred_price = scaler.inverse_transform(pred_price)
+
+    print(pred_price)
+
+    last_60_days = np.append(last_60_days, pred_price[0])
+    last_60_days = np.reshape(last_60_days, (last_60_days.shape[0], 1))
+
+
+stock = "BBVA"
+period = "10y"
+interval = "1d"
+model.save_weights('../model_weights/' + stock + "_period=" + period + "_interval=" + interval + '.h5')
+
+model.load_weights('../model_weights/' + stock + "_period=" + period + "_interval=" + interval + '.h5')

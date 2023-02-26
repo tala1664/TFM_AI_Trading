@@ -8,6 +8,9 @@ from finance.finance_utils import correlation_matrix_portfolio, create_portfolio
 from display.display_utils import interactive_candlestick_graph, interactive_performance_graph
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import year
+from ia_predict.ia_predict import prepare_train_data, build_model, get_prediction, save_model_weights, \
+    load_model_weights, predict_portfolio, train_portfolio
+import tensorflow as tf
 
 
 def get_valid_period():
@@ -44,23 +47,27 @@ def main():
         .appName("AI_Trading") \
         .getOrCreate()
 
-    spark.sparkContext.setLogLevel("ERROR")
+    spark.sparkContext.setLogLevel('ERROR')
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    tf.get_logger().setLevel('ERROR')
 
     option = -1
 
     while option != 0:
-
-        option = int(input("Select a valid option: \n" +
-                           "0. Exit\n" +
-                           "1. Download stock data.\n" +
-                           "2. Show Stock graph. \n" +
-                           "3. Show Stock Performance graph. \n" +
-                           "4. Show Stock Table. \n" +
-                           "5. Update ALL Stocks. \n" +
-                           "6. Create Portfolio. \n" +
-                           "7. Show Portfolio Table. \n" +
-                           "8. Calculate portfolio correlation matrix. \n" +
-                           "9. Calculate portfolio covariance matrix. \n"))
+        try:
+            option = int(input("Select a valid option: \n" +
+                               "0. Exit\n" +
+                               "1. Download stock data.\n" +
+                               "2. Show Stock graph. \n" +
+                               "3. Show Stock Performance graph. \n" +
+                               "4. Show Stock Table. \n" +
+                               "5. Update ALL Stocks. \n" +
+                               "6. Create Portfolio. \n" +
+                               "7. Show Portfolio Table. \n" +
+                               "8. Calculate portfolio correlation matrix. \n" +
+                               "9. Calculate portfolio covariance matrix. \n"))
+        except:
+            option = -1
 
         if option == 1:
             stk = input("Please, input a valid stock name: ").upper()
@@ -122,7 +129,8 @@ def main():
                 df_stock = read_stock_log(spark)
                 df_stock.orderBy("Stock").filter("Period = 'max'").orderBy("Stock").show(truncate=False)
                 list_stock = df_stock.select("Stock").rdd.flatMap(lambda x: x).collect()
-                stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(",")
+                stk_list = input("Please, input a list separated by comma of stocks: ").upper().replace(" ", "").split(
+                    ",")
                 create_portfolio(spark, df_stock, stk_list, list_stock)
             except:
                 print("ERROR. Please try again")
@@ -144,6 +152,24 @@ def main():
             df_portfolio.orderBy("ID").show(truncate=False)
             id_portfolio = int(input("Please, input a portfolio ID: "))
             covariance_matrix_portfolio(spark, df_portfolio, id_portfolio).show()
+
+        elif option == 9:
+            df_portfolio = read_portfolio_list(spark)
+            df_portfolio.orderBy("ID").show(truncate=False)
+            id_portfolio = int(input("Please, input a portfolio ID: "))
+            covariance_matrix_portfolio(spark, df_portfolio, id_portfolio).show()
+
+        elif option == 10:
+            df_portfolio = read_portfolio_list(spark)
+            df_portfolio.orderBy("ID").show(truncate=False)
+            id_portfolio = int(input("Please, input a portfolio ID: "))
+            train_portfolio(spark, df_portfolio, id_portfolio)
+
+        elif option == 11:
+            df_portfolio = read_portfolio_list(spark)
+            df_portfolio.orderBy("ID").show(truncate=False)
+            id_portfolio = int(input("Please, input a portfolio ID: "))
+            predict_portfolio(spark, df_portfolio, id_portfolio)
 
 
 if __name__ == "__main__":
