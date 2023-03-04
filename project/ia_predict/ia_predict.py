@@ -15,10 +15,24 @@ from io_stockdata.io_stockdata import read_stock_data, write_portfolio_list, rea
 from display.display_utils import interactive_performance_prediction
 
 
-def build_model():
+def build_model_LSTM():
     model = tf.keras.models.Sequential([
         tf.keras.layers.LSTM(100, return_sequences=True),
         tf.keras.layers.LSTM(100, return_sequences=False),
+        tf.keras.layers.Dense(25),
+        tf.keras.layers.Dense(1)
+    ])
+
+    model.compile(optimizer='adam',
+                  loss='mean_squared_error')
+
+    return model
+
+
+def build_model_GRU():
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.GRU(100, return_sequences=True, activation='tanh'),
+        tf.keras.layers.GRU(100, return_sequences=False, activation='tanh'),
         tf.keras.layers.Dense(25),
         tf.keras.layers.Dense(1)
     ])
@@ -103,16 +117,16 @@ def load_model_weights(model, stock, period, interval):
         '../model_weights/stocks/' + stock + "_period=" + period + "_interval=" + interval + '.h5')
 
 
-def save_model_weights_portfolio(model, stock, id_portfolio):
-    model.save_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '.h5')
+def save_model_weights_portfolio(model, stock, id_portfolio, model_name):
+    model.save_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '_model=' + model_name + '.h5')
 
 
-def load_model_weights_portfolio(model, stock, id_portfolio):
-    model.load_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '.h5')
+def load_model_weights_portfolio(model, stock, id_portfolio, model_name):
+    model.load_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '_model=' + model_name + '.h5')
 
 
 def train_portfolio(spark, df_portfolio, id_portfolio):
-    model = build_model()
+    model = build_model_GRU()
 
     stock_close_prices = {}
 
@@ -133,11 +147,11 @@ def train_portfolio(spark, df_portfolio, id_portfolio):
 
         train_model(df_stock, model)
         print("\n*** Saving weights of model for stock: " + stock)
-        save_model_weights_portfolio(model, stock, id_portfolio)
+        save_model_weights_portfolio(model, stock, id_portfolio, "GRU")
 
 
 def predict_portfolio(spark, df_portfolio, id_portfolio):
-    model = build_model()
+    model = build_model_GRU()
     model.build(input_shape=(1, 60, 1))
 
     stock_close_prices = {}
@@ -159,7 +173,7 @@ def predict_portfolio(spark, df_portfolio, id_portfolio):
 
     for stock in stock_close_prices:
         print("\n*** Loading weights for stock: " + stock + " Portfolio: " + str(id_portfolio))
-        load_model_weights_portfolio(model, stock, id_portfolio)
+        load_model_weights_portfolio(model, stock, id_portfolio, "GRU")
         print("*** Getting prediction for " + stock + " Portfolio: " + str(id_portfolio))
         predicted_next_prices[stock] = get_prediction(stock_close_prices[stock], model).tolist()[0][0]
 

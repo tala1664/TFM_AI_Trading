@@ -23,7 +23,7 @@ def calculate_performance(dataframe):
 def download_stock_data(spark, stock, period, interval):
     print("Downloading " + stock +
           " stock data. Period: " + period +
-          ". Interval: " + interval + ".")
+          " Interval: " + interval)
 
     data = yf.download(stock, period=period, interval=interval)
     data['DateTime'] = data.index
