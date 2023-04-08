@@ -47,7 +47,8 @@ def interactive_performance_graph(df, stock):
 
     fig = go.Figure(data=go.Scatter(x=df_pandas["DateTime"],
                                     y=df_pandas["Performance"],
-                                    name="Daily Percentage Change"))
+                                    name="Daily Percentage Change",
+                                    title=stock))
 
     fig.update_layout(title=stock + " Performance Percentage Variation", xaxis_title="Date",
                       yaxis_title="Percentage Change")
@@ -55,7 +56,7 @@ def interactive_performance_graph(df, stock):
     fig.show()
 
 
-def interactive_performance_prediction(df, data, predictions, training_data_len):
+def interactive_performance_prediction(df, data, predictions, training_data_len, stock):
     train = data[:training_data_len]
     valid = data[training_data_len:]
     valid['Predictions'] = predictions
@@ -68,4 +69,5 @@ def interactive_performance_prediction(df, data, predictions, training_data_len)
     fig.add_trace(go.Scatter(x=train['Date'], y=train['Close'], name='Historic'))
     fig.add_trace(go.Scatter(x=valid['Date'], y=valid['Close'], name='Real'))
     fig.add_trace(go.Scatter(x=valid['Date'], y=valid['Predictions'], name='Predicted'))
+    fig.update_layout(title=stock, xaxis_title="Date", yaxis_title="Price")
     fig.show()

@@ -43,7 +43,7 @@ def build_model_GRU():
     return model
 
 
-def train_model(df, model):
+def train_model(stock, df, model):
     df = df.toPandas()
     data = df.filter(['Close'])
     dataset = data.values
@@ -87,7 +87,7 @@ def train_model(df, model):
 
     print("\n*** RSME:" + str(rmse))
 
-    interactive_performance_prediction(df, data, predictions, training_data_len)
+    interactive_performance_prediction(df, data, predictions, training_data_len, stock)
 
 
 def get_prediction(df, model):
@@ -145,7 +145,7 @@ def train_portfolio(spark, df_portfolio, id_portfolio):
 
         stock_close_prices[stock] = df_stock.select("Close")
 
-        train_model(df_stock, model)
+        train_model(stock, df_stock, model)
         print("\n*** Saving weights of model for stock: " + stock)
         save_model_weights_portfolio(model, stock, id_portfolio, "GRU")
 
