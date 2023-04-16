@@ -114,7 +114,7 @@ def main():
                 period = get_valid_period()
                 interval = get_valid_interval()
                 df = read_stock_data(spark, stk, period, interval)
-                df.show(truncate=False)
+                df.show(100, truncate=False)
             except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 

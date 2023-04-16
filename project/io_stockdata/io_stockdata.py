@@ -26,6 +26,9 @@ def download_stock_data(spark, stock, period, interval):
           " Interval: " + interval)
 
     data = yf.download(stock, period=period, interval=interval)
+    data["ma30"] = data["Close"].rolling(window=30).mean()
+    data["ma60"] = data["Close"].rolling(window=60).mean()
+    data["ma90"] = data["Close"].rolling(window=90).mean()
     data['DateTime'] = data.index
     data = data[data["DateTime"] > "1970-01-01"]  # Fix Overflow error from mktime
     dataframe = spark.createDataFrame(data)

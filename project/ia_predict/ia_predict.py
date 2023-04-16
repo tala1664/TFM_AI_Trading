@@ -19,7 +19,7 @@ def build_model_LSTM():
     model = tf.keras.models.Sequential([
         tf.keras.layers.LSTM(100, return_sequences=True),
         tf.keras.layers.LSTM(100, return_sequences=False),
-        tf.keras.layers.Dense(25),
+        tf.keras.layers.Dense(50),
         tf.keras.layers.Dense(1)
     ])
 
@@ -45,7 +45,8 @@ def build_model_GRU():
 
 def train_model(stock, df, model):
     df = df.toPandas()
-    data = df.filter(['Close'])
+    df = df.iloc[100:]  # Avoid rows without means filled
+    data = df.filter(['Open', 'High',	'Low', 'Close', 'Volume', 'ma30', 'ma60', 'ma90', 'Performance'])
     dataset = data.values
 
     training_data_len = math.ceil(len(dataset) * 0.8)
@@ -58,36 +59,45 @@ def train_model(stock, df, model):
     x_train = []
     y_train = []
 
-    for i in range(60, len(train_data)):
-        x_train.append(train_data[i - 60:i, 0])
-        y_train.append(train_data[i, 0])
+    for i in range(100, len(train_data)):
+        x_train.append(train_data[i - 100:i])
+        y_train.append(train_data[i, 3])
 
     x_train, y_train = np.array(x_train), np.array(y_train)
 
-    x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+    model.fit(x_train, y_train, batch_size=1, epochs=5)
 
-    model.fit(x_train, y_train, batch_size=1, epochs=2)
-
-    test_data = scaled_data[training_data_len - 60:, :]
+    test_data = scaled_data[training_data_len - 100:, :]
 
     x_test = []
-    y_test = dataset[training_data_len:, :]
+    y_test = dataset[training_data_len:, 3]
 
-    for i in range(60, len(test_data)):
-        x_test.append(test_data[i - 60:i, 0])
-
-    x_test = np.array(x_test)
-
-    x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+    for i in range(100, len(test_data)):
+        x_test.append(test_data[i - 100:i])
+    x_test, y_test = np.array(x_test), np.array(y_test)
 
     predictions = model.predict(x_test)
+
+    ret = []  # Need this to use the same scaler
+    for i in predictions:
+        arr = [i[0], 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+        arr = np.array(arr, dtype='float32')
+        ret.append(arr)
+    predictions = np.array(ret, dtype='float32')
+
     predictions = scaler.inverse_transform(predictions)
+
+    ret = []
+    for i in predictions:
+        ret.append(i[0])
+    predictions = np.array(ret, dtype='float32')
+    predictions = np.reshape(predictions, (predictions.shape[0], 1))
 
     rmse = np.sqrt(np.mean(predictions - y_test) ** 2)
 
     print("\n*** RSME:" + str(rmse))
 
-    interactive_performance_prediction(df, data, predictions, training_data_len, stock)
+    interactive_performance_prediction(df, data.filter(["Close"]), predictions, training_data_len, stock)
 
 
 def get_prediction(df, model):
@@ -118,15 +128,17 @@ def load_model_weights(model, stock, period, interval):
 
 
 def save_model_weights_portfolio(model, stock, id_portfolio, model_name):
-    model.save_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '_model=' + model_name + '.h5')
+    model.save_weights(
+        '../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '_model=' + model_name + '.h5')
 
 
 def load_model_weights_portfolio(model, stock, id_portfolio, model_name):
-    model.load_weights('../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '_model=' + model_name + '.h5')
+    model.load_weights(
+        '../model_weights/portfolios/' + stock + "_portfolio=" + str(id_portfolio) + '_model=' + model_name + '.h5')
 
 
 def train_portfolio(spark, df_portfolio, id_portfolio):
-    model = build_model_GRU()
+    model = build_model_LSTM()
 
     stock_close_prices = {}
 
@@ -151,7 +163,7 @@ def train_portfolio(spark, df_portfolio, id_portfolio):
 
 
 def predict_portfolio(spark, df_portfolio, id_portfolio):
-    model = build_model_GRU()
+    model = build_model_LSTM()
     model.build(input_shape=(1, 60, 1))
 
     stock_close_prices = {}
