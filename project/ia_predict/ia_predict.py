@@ -14,6 +14,8 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from io_stockdata.io_stockdata import read_stock_data, write_portfolio_list, read_portfolio_list
 from display.display_utils import interactive_performance_prediction
 
+GLOBAL_DAYS_WINDOW = 100
+
 
 def build_model_LSTM():
     model = tf.keras.models.Sequential([
@@ -43,41 +45,7 @@ def build_model_GRU():
     return model
 
 
-def train_model(stock, df, model):
-    df = df.toPandas()
-    df = df.iloc[100:]  # Avoid rows without means filled
-    data = df.filter(['Open', 'High',	'Low', 'Close', 'Volume', 'ma30', 'ma60', 'ma90', 'Performance'])
-    dataset = data.values
-
-    training_data_len = math.ceil(len(dataset) * 0.8)
-
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaled_data = scaler.fit_transform(dataset)
-
-    train_data = scaled_data[0: training_data_len, :]
-
-    x_train = []
-    y_train = []
-
-    for i in range(100, len(train_data)):
-        x_train.append(train_data[i - 100:i])
-        y_train.append(train_data[i, 3])
-
-    x_train, y_train = np.array(x_train), np.array(y_train)
-
-    model.fit(x_train, y_train, batch_size=1, epochs=5)
-
-    test_data = scaled_data[training_data_len - 100:, :]
-
-    x_test = []
-    y_test = dataset[training_data_len:, 3]
-
-    for i in range(100, len(test_data)):
-        x_test.append(test_data[i - 100:i])
-    x_test, y_test = np.array(x_test), np.array(y_test)
-
-    predictions = model.predict(x_test)
-
+def reshape_predictions(predictions, scaler):
     ret = []  # Need this to use the same scaler
     for i in predictions:
         arr = [i[0], 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
@@ -93,6 +61,45 @@ def train_model(stock, df, model):
     predictions = np.array(ret, dtype='float32')
     predictions = np.reshape(predictions, (predictions.shape[0], 1))
 
+    return predictions
+
+
+def train_model(stock, df, model):
+    df = df.toPandas()
+    df = df.iloc[GLOBAL_DAYS_WINDOW:]  # Avoid rows without means filled
+    data = df.filter(['Open', 'High', 'Low', 'Close', 'Volume', 'ma30', 'ma60', 'ma90', 'Performance'])
+    dataset = data.values
+
+    training_data_len = math.ceil(len(dataset) * 0.8)
+
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    scaled_data = scaler.fit_transform(dataset)
+
+    train_data = scaled_data[0: training_data_len, :]
+
+    x_train = []
+    y_train = []
+
+    for i in range(100, len(train_data)):
+        x_train.append(train_data[i - GLOBAL_DAYS_WINDOW:i])
+        y_train.append(train_data[i, 3])
+
+    x_train, y_train = np.array(x_train), np.array(y_train)
+
+    model.fit(x_train, y_train, batch_size=1, epochs=5)
+
+    test_data = scaled_data[training_data_len - GLOBAL_DAYS_WINDOW:, :]
+
+    x_test = []
+    y_test = dataset[training_data_len:, 3]
+
+    for i in range(100, len(test_data)):
+        x_test.append(test_data[i - GLOBAL_DAYS_WINDOW:i])
+    x_test, y_test = np.array(x_test), np.array(y_test)
+
+    predictions = model.predict(x_test)
+    predictions = reshape_predictions(predictions, scaler)
+
     rmse = np.sqrt(np.mean(predictions - y_test) ** 2)
 
     print("\n*** RSME:" + str(rmse))
@@ -103,19 +110,17 @@ def train_model(stock, df, model):
 def get_prediction(df, model):
     scaler = MinMaxScaler(feature_range=(0, 1))
     df = df.toPandas()
-    data = df.filter(['Close'])
+    data = df.filter(['Open', 'High', 'Low', 'Close', 'Volume', 'ma30', 'ma60', 'ma90', 'Performance'])
 
-    last_60_days = data[-60:].values
+    last_days = data[-GLOBAL_DAYS_WINDOW:].values
 
-    last_60_days_scaled = scaler.fit_transform(last_60_days)
-    x_test = [last_60_days_scaled]
-    x_test = np.array(x_test)
-    x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+    x_test = scaler.fit_transform(last_days)
+    x_test = np.reshape(x_test, (1, x_test.shape[0], x_test.shape[1]))
 
-    pred_price = model.predict(x_test)
-    pred_price = scaler.inverse_transform(pred_price)
+    predictions = model.predict(x_test)
+    predictions = reshape_predictions(predictions, scaler)
 
-    return pred_price
+    return predictions
 
 
 def save_model_weights(model, stock, period, interval):
@@ -159,12 +164,12 @@ def train_portfolio(spark, df_portfolio, id_portfolio):
 
         train_model(stock, df_stock, model)
         print("\n*** Saving weights of model for stock: " + stock)
-        save_model_weights_portfolio(model, stock, id_portfolio, "GRU")
+        save_model_weights_portfolio(model, stock, id_portfolio, "LSTM")
 
 
 def predict_portfolio(spark, df_portfolio, id_portfolio):
     model = build_model_LSTM()
-    model.build(input_shape=(1, 60, 1))
+    model.build(input_shape=(1, GLOBAL_DAYS_WINDOW, 9))
 
     stock_close_prices = {}
     predicted_next_prices = {}
@@ -181,11 +186,13 @@ def predict_portfolio(spark, df_portfolio, id_portfolio):
         df_stock = df_stock.filter(df_stock.DateTime > min_date) \
             .filter(df_stock.DateTime < max_date)
 
-        stock_close_prices[stock] = df_stock.select("Close")
+        stock_close_prices[stock] = df_stock.select('Open', 'High', 'Low',
+                                                    'Close', 'Volume', 'ma30',
+                                                    'ma60', 'ma90', 'Performance')
 
     for stock in stock_close_prices:
         print("\n*** Loading weights for stock: " + stock + " Portfolio: " + str(id_portfolio))
-        load_model_weights_portfolio(model, stock, id_portfolio, "GRU")
+        load_model_weights_portfolio(model, stock, id_portfolio, "LSTM")
         print("*** Getting prediction for " + stock + " Portfolio: " + str(id_portfolio))
         predicted_next_prices[stock] = get_prediction(stock_close_prices[stock], model).tolist()[0][0]
 

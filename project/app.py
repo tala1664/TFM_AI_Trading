@@ -12,8 +12,6 @@ from ia_predict.ia_predict import predict_portfolio, train_portfolio
 import tensorflow as tf
 import pandas as pd
 
-
-
 def get_valid_period():
     periods = ["1d", "5d", "1mo",
                "3mo", "6mo", "1y",
