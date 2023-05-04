@@ -90,8 +90,6 @@ def train_model(stock, df, model):
 
     model.fit(x_train, y_train, batch_size=1, epochs=5)
 
-    print(model.summary())
-
     test_data = scaled_data[training_data_len - GLOBAL_DAYS_WINDOW:, :]
 
     x_test = []
@@ -173,7 +171,6 @@ def train_portfolio(spark, df_portfolio, id_portfolio):
 
 def predict_portfolio(spark, df_portfolio, id_portfolio):
     model = build_model_LSTM()
-    #model.build(input_shape=(1, GLOBAL_DAYS_WINDOW, 9))
 
     stock_close_prices = {}
     predicted_next_prices = {}
