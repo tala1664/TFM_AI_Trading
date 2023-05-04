@@ -28,6 +28,8 @@ def build_model_LSTM():
     model.compile(optimizer='adam',
                   loss='mean_squared_error')
 
+    model.build(input_shape=(1, GLOBAL_DAYS_WINDOW, 9))
+
     return model
 
 
@@ -87,6 +89,8 @@ def train_model(stock, df, model):
     x_train, y_train = np.array(x_train), np.array(y_train)
 
     model.fit(x_train, y_train, batch_size=1, epochs=5)
+
+    print(model.summary())
 
     test_data = scaled_data[training_data_len - GLOBAL_DAYS_WINDOW:, :]
 
@@ -169,7 +173,7 @@ def train_portfolio(spark, df_portfolio, id_portfolio):
 
 def predict_portfolio(spark, df_portfolio, id_portfolio):
     model = build_model_LSTM()
-    model.build(input_shape=(1, GLOBAL_DAYS_WINDOW, 9))
+    #model.build(input_shape=(1, GLOBAL_DAYS_WINDOW, 9))
 
     stock_close_prices = {}
     predicted_next_prices = {}
