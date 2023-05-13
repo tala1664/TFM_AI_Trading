@@ -109,22 +109,16 @@ def get_simulation(df, model, num_days, num_traces):
         for i in range(num_days):
             simulations[j] = np.reshape(simulations[j], (1, simulations[j].shape[0], 1))
             next_day = model.predict(simulations[j])
-            print("next day " + str(scaler.inverse_transform(next_day)))
+
             max_val = np.max(simulations[j])
             min_val = np.min(simulations[j])
             mean = np.mean(simulations[j])
-            print("max " + str(max_val))
-            print("min " + str(min_val))
-            print("mean " + str(mean))
+
             pct_up = max_val / mean
             pct_down = min_val / mean
-            print("pct_up " + str(pct_up))
-            print("pct_down " + str(pct_down))
             pct_rand = 1 + ((1 if np.random.randint(2) == 0 else -1) *
                             np.random.uniform(low=pct_down, high=pct_up) / 10)
-            print("pct_rand " + str(pct_rand))
             next_day = next_day * pct_rand
-            print("next day append " + str(scaler.inverse_transform(next_day)))
             simulations[j] = np.append(simulations[j], next_day)
 
     return scaler.inverse_transform(simulations)

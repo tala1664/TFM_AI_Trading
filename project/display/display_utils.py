@@ -1,6 +1,7 @@
 import pandas as pd
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def display_line_graph(df, x_col, y_col, stock):
@@ -83,8 +84,12 @@ def interactive_performance_prediction(df, data, predictions, training_data_len,
 
 
 def interactive_simulation(simulations, stock):
+
+    mean_columns = np.mean(simulations, axis=0)
+
     fig = go.Figure()
     fig.update_layout(title=stock, xaxis_title="Days", yaxis_title="Price")
+    fig.add_trace(go.Scatter(y=mean_columns, line=dict(width=5, color='red'), name='Mean'))
 
     for i in simulations:
         fig.add_trace(go.Scatter(y=i))
