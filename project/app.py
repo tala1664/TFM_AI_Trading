@@ -9,8 +9,10 @@ from display.display_utils import interactive_candlestick_graph, interactive_per
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import year
 from ia_predict.ia_predict import predict_portfolio, train_portfolio
+from ia_predict.ia_simulate import simulate_portfolio, train_portfolio_sim
 import tensorflow as tf
 import pandas as pd
+
 
 def get_valid_period():
     periods = ["1d", "5d", "1mo",
@@ -66,8 +68,10 @@ def main():
                                "7. Calculate portfolio covariance matrix. \n" +
                                "8. Train model with portfolio. \n" +
                                "9. Get portfolio predictions. \n" +
-                               "10. Show Stock Table. \n" +
-                               "11. Show Portfolio Table. \n"))
+                               "10. Train Model Portfolio MonteCarlo Simulation. \n" +
+                               "11. Portfolio MonteCarlo Simulation. \n" +
+                               "12. Show Stock Table. \n" +
+                               "13. Show Portfolio Table. \n"))
         except:
             option = -1
 
@@ -105,7 +109,7 @@ def main():
             except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
-        elif option == 10:
+        elif option == 12:
             try:
                 read_stock_log(spark).orderBy("Stock").show(truncate=False)
                 stk = input("Please, input a valid stock name: ").upper()
@@ -137,7 +141,7 @@ def main():
             except:
                 print("ERROR. Please try again")
 
-        elif option == 11:
+        elif option == 13:
             try:
                 read_portfolio_list(spark).orderBy("ID").show(truncate=False)
             except:
@@ -166,6 +170,20 @@ def main():
             df_portfolio.orderBy("ID").show(truncate=False)
             id_portfolio = int(input("Please, input a portfolio ID: "))
             predict_portfolio(spark, df_portfolio, id_portfolio)
+
+        elif option == 10:
+            df_portfolio = read_portfolio_list(spark)
+            df_portfolio.orderBy("ID").show(truncate=False)
+            id_portfolio = int(input("Please, input a portfolio ID: "))
+            train_portfolio_sim(spark, df_portfolio, id_portfolio)
+
+        elif option == 11:
+            df_portfolio = read_portfolio_list(spark)
+            df_portfolio.orderBy("ID").show(truncate=False)
+            id_portfolio = int(input("Please, input a portfolio ID: "))
+            num_days = int(input("Please, enter the number of days: "))
+            num_traces = int(input("Please, enter the number of traces: "))
+            simulate_portfolio(spark, df_portfolio, id_portfolio, num_days, num_traces)
 
 
 if __name__ == "__main__":

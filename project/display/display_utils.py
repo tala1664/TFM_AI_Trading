@@ -65,7 +65,6 @@ def interactive_performance_graph(df, stock):
 
 
 def interactive_performance_prediction(df, data, predictions, training_data_len, stock):
-
     train = data[:training_data_len]
     valid = data[training_data_len:]
     valid['Predictions'] = predictions
@@ -79,5 +78,15 @@ def interactive_performance_prediction(df, data, predictions, training_data_len,
     fig.add_trace(go.Scatter(x=train['Date'], y=train['Close'], name='Historic'))
     fig.add_trace(go.Scatter(x=valid['Date'], y=valid['Close'], name='Real'))
     fig.add_trace(go.Scatter(x=valid['Date'], y=valid['Predictions'], name='Predicted'))
+
+    fig.show()
+
+
+def interactive_simulation(simulations, stock):
+    fig = go.Figure()
+    fig.update_layout(title=stock, xaxis_title="Days", yaxis_title="Price")
+
+    for i in simulations:
+        fig.add_trace(go.Scatter(y=i))
 
     fig.show()
