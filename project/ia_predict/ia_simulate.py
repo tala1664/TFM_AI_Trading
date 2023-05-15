@@ -19,7 +19,7 @@ GLOBAL_DAYS_WINDOW = 100
 
 def build_model_LSTM():
     model = tf.keras.models.Sequential([
-        tf.keras.layers.LSTM(100, return_sequences=True),
+        tf.keras.layers.LSTM(200, return_sequences=True),
         tf.keras.layers.LSTM(100, return_sequences=False),
         tf.keras.layers.Dense(50),
         tf.keras.layers.Dense(1)
@@ -75,10 +75,11 @@ def train_model_sim(stock, df, model):
     test_data = scaled_data[training_data_len - GLOBAL_DAYS_WINDOW:, :]
 
     x_test = []
-    y_test = dataset[training_data_len:, :]
+    y_test = []
 
     for i in range(100, len(test_data)):
         x_test.append(test_data[i - GLOBAL_DAYS_WINDOW:i, 0])
+        y_test.append(test_data[i, 0])
     x_test, y_test = np.array(x_test), np.array(y_test)
     x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
 

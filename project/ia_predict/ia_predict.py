@@ -19,7 +19,7 @@ GLOBAL_DAYS_WINDOW = 100
 
 def build_model_LSTM():
     model = tf.keras.models.Sequential([
-        tf.keras.layers.LSTM(100, return_sequences=True),
+        tf.keras.layers.LSTM(200, return_sequences=True),
         tf.keras.layers.LSTM(100, return_sequences=False),
         tf.keras.layers.Dense(50),
         tf.keras.layers.Dense(1)
@@ -93,18 +93,19 @@ def train_model(stock, df, model):
     test_data = scaled_data[training_data_len - GLOBAL_DAYS_WINDOW:, :]
 
     x_test = []
-    y_test = dataset[training_data_len:, 3]
+    y_test = []
 
     for i in range(100, len(test_data)):
         x_test.append(test_data[i - GLOBAL_DAYS_WINDOW:i])
+        y_test.append(test_data[i, 3])
     x_test, y_test = np.array(x_test), np.array(y_test)
 
     predictions = model.predict(x_test)
-    predictions = reshape_predictions(predictions, scaler)
 
     rmse = np.sqrt(np.mean(predictions - y_test) ** 2)
-
     print("\n*** RSME:" + str(rmse))
+
+    predictions = reshape_predictions(predictions, scaler)
 
     interactive_performance_prediction(df, data.filter(["Close"]), predictions, training_data_len, stock)
 
