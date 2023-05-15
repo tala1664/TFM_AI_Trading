@@ -120,6 +120,10 @@ def get_simulation(df, model, num_days, num_traces):
             pct_rand = 1 + ((1 if np.random.randint(2) == 0 else -1) *
                             np.random.uniform(low=pct_down, high=pct_up) / 10)
             next_day = next_day * pct_rand
+            next_day = next_day if next_day > 0 else 0
+            next_day = next_day if next_day < next_day * pct_up else (next_day * pct_down) / 10
+            next_day = next_day if next_day > next_day * pct_down else (next_day * pct_up) / 10
+
             simulations[j] = np.append(simulations[j], next_day)
 
     return scaler.inverse_transform(simulations)
