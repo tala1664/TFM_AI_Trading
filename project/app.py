@@ -70,8 +70,9 @@ def main():
                                "9. Get portfolio predictions. \n" +
                                "10. Train Model Portfolio MonteCarlo Simulation. \n" +
                                "11. Portfolio MonteCarlo Simulation. \n" +
-                               "12. Show Stock Table. \n" +
-                               "13. Show Portfolio Table. \n"))
+                               "12. Show Stocks Table. \n" +
+                               "13. Show Portfolio Table. \n" +
+                               "14. Show Stock Table. \n"))
         except:
             option = -1
 
@@ -109,7 +110,7 @@ def main():
             except (TypeError, AttributeError):
                 print("Empty data, try option -> 1. Download stock data.\n")
 
-        elif option == 12:
+        elif option == 14:
             try:
                 read_stock_log(spark).orderBy("Stock").show(truncate=False)
                 stk = input("Please, input a valid stock name: ").upper()
@@ -184,6 +185,12 @@ def main():
             num_days = int(input("Please, enter the number of days: "))
             num_traces = int(input("Please, enter the number of traces: "))
             simulate_portfolio(spark, df_portfolio, id_portfolio, num_days, num_traces)
+
+        elif option == 12:
+            try:
+                read_stock_log(spark).orderBy("Stock").show()
+            except (TypeError, AttributeError):
+                print("Empty data, try option -> 1. Download stock data.\n")
 
 
 if __name__ == "__main__":
