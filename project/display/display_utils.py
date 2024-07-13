@@ -23,14 +23,6 @@ def interactive_candlestick_graph(df, stock):
 
     df_pandas["DateTime"] = pd.to_datetime(df_pandas["DateTime"])
 
-    fig = go.Figure(data=[
-        go.Candlestick(x=df_pandas["DateTime"],
-                       open=df_pandas["Open"],
-                       high=df_pandas["High"],
-                       low=df_pandas["Low"],
-                       close=df_pandas["Close"],
-                       name="Price")])
-
     fig.add_trace(go.Scatter(x=df_pandas["DateTime"],
                              y=df_pandas["ma30"],
                              name="30-Day Moving Average",
@@ -95,3 +87,5 @@ def interactive_simulation(simulations, stock):
         fig.add_trace(go.Scatter(y=i))
 
     fig.show()
+    commit -m "Fix bug in user login"
+    
