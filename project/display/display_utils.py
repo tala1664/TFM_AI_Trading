@@ -77,7 +77,7 @@ def interactive_performance_prediction(df, data, predictions, training_data_len,
 
 def interactive_simulation(simulations, stock):
 
-    mean_columns = np.mean(simulations, axis=0)
+    mean_columns = np.mean(simulations, axis=2)
 
     fig = go.Figure()
     fig.update_layout(title=stock, xaxis_title="Days", yaxis_title="Price")
@@ -88,4 +88,6 @@ def interactive_simulation(simulations, stock):
 
     fig.show()
     commit -m "Fix bug in user login"
+
+ commit -m "changes"
     
